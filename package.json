@@ -1,0 +1,107 @@
+{
+  "name": "redscript-lsp-ext",
+  "version": "1.0.0",
+  "description": "",
+  "author": "jac3km4",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.52.0"
+  },
+  "activationEvents": [
+    "onLanguage:swift"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "redscript",
+        "aliases": [
+          "redscript"
+        ],
+        "extensions": [
+          ".reds"
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "Redscript",
+      "properties": {
+        "redscript.compilerPath": {
+          "type": "string",
+          "description": "Path to redscript-cli"
+        },
+        "redscript.scriptCachePath": {
+          "type": "string",
+          "description": "Path to final.redscripts to use when compiling (Optional)"
+        },
+        "redscript.gameDir": {
+          "type": "string",
+          "description": "Path to Cyberpunk 2077 base folder to use when deploying"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "redscript.deployProject",
+        "title": "redscript: Deploy Mod"
+      },
+      {
+        "command": "redscript.undeployProject",
+        "title": "redscript: Undeploy Mod"
+      },
+      {
+        "command": "redscript.createZip",
+        "title": "redscript: Zip current mod"
+      },
+      {
+        "command": "redscript.newMod",
+        "title": "redscript: New redscript mod"
+      },
+      {
+        "command": "redscript.openScriptsDir",
+        "title": "redscript: Open game scripts folder"
+      },
+      {
+        "command": "redscript.launchGame",
+        "title": "redscript: Launch Game"
+      },
+      {
+        "command": "redscript.deployAndLaunchGame",
+        "title": "redscript: Deploy & Launch Game"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "redscript.deployProject",
+          "when": "editorLangId == swift"
+        },
+        {
+          "command": "redscript.undeployProject",
+          "when": "editorLangId == swift"
+        },
+        {
+          "command": "redscript.createZip",
+          "when": "editorLangId == swift"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "lint": "eslint . --ext .ts,.tsx",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "@microsoft/vscode-file-downloader-api": "^1.0.1",
+    "vscode-languageclient": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.10.2",
+    "@types/vscode": "^1.60.0"
+  },
+  "extensionDependencies": [
+    "mindaro-dev.file-downloader"
+  ]
+}
