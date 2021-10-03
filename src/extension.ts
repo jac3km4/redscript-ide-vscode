@@ -14,20 +14,22 @@ import {
 
 let client: LanguageClient;
 
-const exeUri = Uri.parse("https://github.com/jac3km4/redscript-ide/releases/download/v0.0.1/redscript-ide.exe");
+const version = "v0.0.2";
+const exeDownloadUri = Uri.parse(`https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`);
 
 export async function activate(context: ExtensionContext) {
   const fileDownloader: FileDownloader = await getApi();
-  let serverExe = await fileDownloader.tryGetItem("redscript-ide.exe", context);
-  if (!serverExe) {
-    serverExe = await fileDownloader.downloadFile(exeUri, "redscript-ide.exe", context);
+  const exeName = `redscript-ide-${version}.exe`;
+  let exeUri = await fileDownloader.tryGetItem(exeName, context);
+  if (!exeUri) {
+    exeUri = await fileDownloader.downloadFile(exeDownloadUri, exeName, context);
   }
 
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   const serverOptions: ServerOptions = {
-    run: { command: serverExe.fsPath },
-    debug: { command: serverExe.fsPath }
+    run: { command: exeUri.fsPath },
+    debug: { command: exeUri.fsPath }
   };
 
   // Options to control the language client
