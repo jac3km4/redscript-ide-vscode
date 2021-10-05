@@ -14,7 +14,7 @@ import {
 
 let client: LanguageClient;
 
-const version = "v0.0.2";
+const version = "v0.0.3";
 const exeDownloadUri = Uri.parse(`https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`);
 
 export async function activate(context: ExtensionContext) {
