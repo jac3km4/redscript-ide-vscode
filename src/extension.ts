@@ -14,7 +14,7 @@ import {
 
 let client: LanguageClient;
 
-const version = "v0.0.7";
+const version = "v0.0.8";
 const exeDownloadUri = Uri.parse(`https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`);
 
 export async function activate(context: ExtensionContext) {
@@ -35,7 +35,7 @@ export async function activate(context: ExtensionContext) {
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
-    documentSelector: [{ scheme: 'file', language: 'swift' }],
+    documentSelector: [{ scheme: 'file', language: 'redscript' }],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
       fileEvents: workspace.createFileSystemWatcher('**/.reds')
