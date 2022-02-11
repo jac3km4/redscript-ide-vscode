@@ -1,0 +1,24 @@
+on:
+  release:
+    types: [created]
+
+name: Build Extension
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm install
+      - uses: lannonbr/vsce-action@3.0.0
+        with:
+          args: "package"
+      - name: Set version
+        run: echo "PACKAGE_VERSION=$(node -p 'require(\'./package.json\').version')" >> $GITHUB_ENV
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./redscrip-ide-vscode-${{ env.PACKAGE_VERSION }}.vsix
+          asset_name: redscrip-ide-vscode-${{ env.PACKAGE_VERSION }}.vsix
+          asset_content_type: application/vsix
