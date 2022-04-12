@@ -3,33 +3,31 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { workspace, ExtensionContext, Uri } from 'vscode';
-import { getApi, FileDownloader } from "@microsoft/vscode-file-downloader-api";
+import { workspace, ExtensionContext, window } from 'vscode';
+import { xhr, getErrorStatusDescription } from 'request-light';
+import * as fs from 'fs';
+import * as https from 'https';
 
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
 } from 'vscode-languageclient/node';
+import path = require('path');
 
 let client: LanguageClient;
 
 const version = "v0.0.12";
-const exeDownloadUri = Uri.parse(`https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`);
+const exeDownloadUrl = `https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`;
 
 export async function activate(context: ExtensionContext) {
-  const fileDownloader: FileDownloader = await getApi();
-  const exeName = `redscript-ide-${version}.exe`;
-  let exeUri = await fileDownloader.tryGetItem(exeName, context);
-  if (!exeUri) {
-    exeUri = await fileDownloader.downloadFile(exeDownloadUri, exeName, context);
-  }
+  const exePath = await retrieveArtifact(context, exeDownloadUrl, version);
 
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   const serverOptions: ServerOptions = {
-    run: { command: exeUri.fsPath },
-    debug: { command: exeUri.fsPath }
+    run: { command: exePath },
+    debug: { command: exePath }
   };
 
   // Options to control the language client
@@ -59,4 +57,37 @@ export async function deactivate() {
     return undefined;
   }
   return client.stop();
+}
+
+async function retrieveArtifact(context: ExtensionContext, url: string, version: string): Promise<string> {
+  const channel = window.createOutputChannel("Redscript");
+
+  const artifact = path.basename(url);
+  const artifactPath = getArtifactPath(context, artifact, version);
+  const exists = await fs.promises.access(artifactPath).then(() => true, () => false);
+
+  if (!exists) {
+    channel.appendLine(`Artifact '${artifact}' not found, downloading...`);
+    let contents = await downloadFile(url);
+    await fs.promises.mkdir(path.dirname(artifactPath), { recursive: true });
+    await fs.promises.writeFile(artifactPath, contents);
+  }
+
+  channel.appendLine(`Using an artifact at ${artifactPath}`);
+  channel.dispose();
+
+  return artifactPath;
+}
+
+async function downloadFile(url: string): Promise<Uint8Array> {
+  return xhr({ url, followRedirects: 5 })
+    .then(response => response.body)
+    .catch(error => {
+      throw new Error(error.responseText || getErrorStatusDescription(error.status) || error.toString());
+    });
+}
+
+function getArtifactPath(context: ExtensionContext, artifact: string, version: string): string {
+  const parsed = path.parse(artifact);
+  return path.join(context.globalStorageUri.fsPath, "artifacts", `${parsed.name}-${version}`, artifact);
 }

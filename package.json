@@ -3,7 +3,7 @@
   "displayName": "redscript-ide-vscode",
   "description": "Redscript IDE VSCode support",
   "publisher": "jac3km4",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "repository": "https://github.com/jac3km4/redscript-ide-vscode",
   "engines": {
     "vscode": "^1.52.0"
@@ -48,7 +48,9 @@
     "watch": "tsc -watch -p ./"
   },
   "dependencies": {
-    "@microsoft/vscode-file-downloader-api": "^1.0.1",
+    "http-proxy-agent": "^5.0.0",
+    "https-proxy-agent": "^5.0.0",
+    "request-light": "^0.5.8",
     "vscode-languageclient": "^7.0.0"
   },
   "devDependencies": {
@@ -57,7 +59,6 @@
     "typescript": "^4.5.5"
   },
   "extensionDependencies": [
-    "mindaro-dev.file-downloader",
     "jackhumbert.redscript-syntax-highlighting"
   ]
 }
