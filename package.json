@@ -3,7 +3,7 @@
   "displayName": "redscript-ide-vscode",
   "description": "Redscript IDE VSCode support",
   "publisher": "jac3km4",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": "https://github.com/jac3km4/redscript-ide-vscode",
   "engines": {
     "vscode": "^1.52.0"
