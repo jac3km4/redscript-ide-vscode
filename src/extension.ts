@@ -6,7 +6,6 @@
 import { workspace, ExtensionContext, window } from 'vscode';
 import { xhr, getErrorStatusDescription } from 'request-light';
 import * as fs from 'fs';
-import * as https from 'https';
 
 import {
   LanguageClient,
@@ -17,7 +16,7 @@ import path = require('path');
 
 let client: LanguageClient;
 
-const version = "v0.1.2";
+const version = "v0.1.4";
 const exeDownloadUrl = `https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`;
 
 export async function activate(context: ExtensionContext) {
