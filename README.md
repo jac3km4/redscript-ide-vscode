@@ -3,6 +3,8 @@ VS Code extension for redscript, client for [the redscript IDE](https://github.c
 
 ## usage
 
+*VS Code 1.78 introduced a regression that breaks this extension. Until a new version is released you should downgrade your VS Code: https://code.visualstudio.com/updates/v1_77*
+
 This extension can be installed by dragging [the latest VSIX release](https://github.com/jac3km4/redscript-ide-vscode/releases) file onto your VSCode extension bar.
 
 To complete the setup, you need to fill in at least one of the preferences:
