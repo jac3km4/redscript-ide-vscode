@@ -49,8 +49,7 @@
     "http-proxy-agent": "^6.0.0",
     "https-proxy-agent": "^6.0.0",
     "request-light": "^0.7.0",
-    "vscode-languageclient": "^8.0.0",
-    "@vscode/windows-ca-certs": "^0.3.0"
+    "vscode-languageclient": "^8.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
