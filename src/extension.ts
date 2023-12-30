@@ -16,7 +16,7 @@ import path = require('path');
 
 let client: LanguageClient;
 
-const version = "v0.1.6";
+const version = "v0.1.7";
 const exeDownloadUrl = `https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`;
 
 export async function activate(context: ExtensionContext) {
