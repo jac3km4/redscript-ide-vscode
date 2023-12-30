@@ -30,13 +30,13 @@
     "configuration": {
       "title": "Redscript",
       "properties": {
-        "redscript.scriptCachePath": {
-          "type": "string",
-          "description": "Path to final.redscripts to use when compiling (Optional)"
-        },
         "redscript.gameDir": {
           "type": "string",
-          "description": "Path to Cyberpunk 2077 base folder to use when deploying"
+          "description": "Path to the Cyberpunk 2077 installation directory (should contain r6, tools, bin etc.)"
+        },
+        "redscript.scriptCachePath": {
+          "type": "string",
+          "description": "Path to the final.redscripts file to use when compiling, do not provide this unless you know what you're doing (Optional)"
         }
       }
     }
