@@ -16,11 +16,16 @@ import path = require('path');
 
 let client: LanguageClient;
 
-const version = "v0.1.7";
-const exeDownloadUrl = `https://github.com/jac3km4/redscript-ide/releases/download/${version}/redscript-ide.exe`;
-
 export async function activate(context: ExtensionContext) {
-  const exePath = await retrieveArtifact(context, exeDownloadUrl, version);
+  let exePath: string | undefined;
+  let release: { tagName: string, url: string } | undefined;
+  try {
+    release = await getLatestRelease();
+    exePath = await retrieveArtifact(context, release.url, release.tagName);
+  } catch (error) {
+    window.showErrorMessage(`Failed to download the language server: ${error}`);
+    return;
+  }
 
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
@@ -89,4 +94,22 @@ async function downloadFile(url: string): Promise<Uint8Array> {
 function getArtifactPath(context: ExtensionContext, artifact: string, version: string): string {
   const parsed = path.parse(artifact);
   return path.join(context.globalStorageUri.fsPath, "artifacts", `${parsed.name}-${version}`, artifact);
+}
+
+async function getLatestRelease(): Promise<{ tagName: string, url: string }> {
+  const url = "https://api.github.com/repos/jac3km4/redscript-ide/releases/latest";
+  const response = await xhr({ url, followRedirects: 5, headers: { "User-Agent": "redscript-ide" } })
+    .catch(error => {
+      throw new Error(error.responseText || getErrorStatusDescription(error.status) || error.toString());
+    });
+
+  if (response.status !== 200) {
+    throw new Error(`Received an error code from Github: ${response.status}`);
+  }
+  const { tag_name, assets } = JSON.parse(response.responseText);
+  const exe = assets.find((asset: any) => asset.name === "redscript-ide.exe");
+  if (!exe) {
+    throw new Error("No redscript-ide.exe in the latest release");
+  }
+  return { tagName: tag_name, url: exe.browser_download_url };
 }
