@@ -6,6 +6,7 @@
 import { workspace, ExtensionContext, window } from 'vscode';
 import { xhr, getErrorStatusDescription } from 'request-light';
 import * as fs from 'fs';
+import * as os from 'os';
 
 import {
   LanguageClient,
@@ -107,9 +108,19 @@ async function getLatestRelease(): Promise<{ tagName: string, url: string }> {
     throw new Error(`Received an error code from Github: ${response.status}`);
   }
   const { tag_name, assets } = JSON.parse(response.responseText);
-  const exe = assets.find((asset: any) => asset.name === "redscript-ide.exe");
+  const platform = os.platform();
+  const arch = os.arch();
+  // these are the binaries built in redscript-ide on github
+  const binary = platform === "win32"
+  ? "redscript-ide.exe"
+  : platform === "darwin"
+    ? arch === "arm64"
+      ? "redscript-ide-apple-silicon"
+      : "redscript-ide-apple-intel"
+    : "redscript-ide-linux";
+  const exe = assets.find((asset: any) => asset.name === binary);
   if (!exe) {
-    throw new Error("No redscript-ide.exe in the latest release");
+    throw new Error(`No ${binary} in the latest release`);
   }
   return { tagName: tag_name, url: exe.browser_download_url };
 }
