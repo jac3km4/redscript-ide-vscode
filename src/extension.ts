@@ -108,17 +108,40 @@ async function getLatestRelease(): Promise<{ tagName: string, url: string }> {
     throw new Error(`Received an error code from Github: ${response.status}`);
   }
   const { tag_name, assets } = JSON.parse(response.responseText);
-  const platform = os.platform() === 'win32'
-  ? 'pc-windows-msvc'
-  : os.platform() === 'darwin'
-    ? 'apple-darwin'
-    : 'unknown-linux-gnu';
-  const arch = os.arch() === 'arm64' ? 'aarch64' : 'x86_64';
-  // these are the binaries built in redscript-ide on github
-  const binary = `redscript-ide-${arch}-${platform}`;
+  const binary = getBinaryName();
   const exe = assets.find((asset: any) => asset.name === binary);
   if (!exe) {
     throw new Error(`No ${binary} in the latest release`);
   }
   return { tagName: tag_name, url: exe.browser_download_url };
+}
+
+function getBinaryName(): string {
+  let platform: string;
+  switch (os.platform()) {
+    case 'win32':
+      return 'redscript-ide.exe';
+    case 'darwin':
+      platform = `apple-darwin`;
+      break;
+    case 'linux':
+      platform = `unknown-linux-gnu`;
+      break;
+    default:
+      throw new Error(`Unsupported platform: ${os.platform()}`);
+  }
+
+  let arch: string;
+  switch (os.arch()) {
+    case 'x64':
+      arch = 'x86_64';
+      break;
+    case 'arm64':
+      arch = 'aarch64';
+      break;
+    default:
+      throw new Error(`Unsupported architecture: ${os.arch()}`);
+  }
+
+  return `redscript-ide-${arch}-${platform}`;
 }
