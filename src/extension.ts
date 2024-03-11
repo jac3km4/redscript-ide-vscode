@@ -76,6 +76,7 @@ async function retrieveArtifact(context: ExtensionContext, url: string, version:
     let contents = await downloadFile(url);
     await fs.promises.mkdir(path.dirname(artifactPath), { recursive: true });
     await fs.promises.writeFile(artifactPath, contents);
+    await fs.promises.chmod(artifactPath, 0o755);
   }
 
   channel.appendLine(`Using an artifact at ${artifactPath}`);
