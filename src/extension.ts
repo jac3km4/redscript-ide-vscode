@@ -19,10 +19,8 @@ let client: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
   let exePath: string | undefined;
-  let release: { tagName: string, url: string } | undefined;
   try {
-    release = await getLatestRelease();
-    exePath = await retrieveArtifact(context, release.url, release.tagName);
+    exePath = await retrieveArtifact(context);
   } catch (error) {
     window.showErrorMessage(`Failed to download the language server: ${error}`);
     return;
@@ -64,25 +62,37 @@ export async function deactivate() {
   return client.stop();
 }
 
-async function retrieveArtifact(context: ExtensionContext, url: string, version: string): Promise<string> {
+async function retrieveArtifact(context: ExtensionContext): Promise<string> {
   const channel = window.createOutputChannel("Redscript");
 
-  const artifact = path.basename(url);
-  const artifactPath = getArtifactPath(context, artifact, version);
-  const exists = await fs.promises.access(artifactPath).then(() => true, () => false);
+  const currentVersion: string | undefined = context.globalState.get("redscript-ide.version");
+  const currentArtifact = currentVersion ? await getIdeExePath(context, currentVersion) : undefined;
+  const latest = await getLatestRelease().catch(err => {
+    channel.appendLine(`Failed to get the latest release: ${err.message}`);
+    return undefined;
+  });
 
-  if (!exists) {
-    channel.appendLine(`Artifact '${artifact}' not found, downloading...`);
-    let contents = await downloadFile(url);
-    await fs.promises.mkdir(path.dirname(artifactPath), { recursive: true });
-    await fs.promises.writeFile(artifactPath, contents);
-    await fs.promises.chmod(artifactPath, 0o755);
+  if (latest === undefined && currentArtifact?.exists) {
+    return currentArtifact.path;
+  } else if (latest === undefined) {
+    throw new Error("Could not download redscript-ide from Github");
   }
 
-  channel.appendLine(`Using an artifact at ${artifactPath}`);
+  const desiredArtifact = await getIdeExePath(context, latest.tagName);
+  if (!desiredArtifact.exists) {
+    channel.appendLine(`Artifact ${latest.tagName} not found, downloading...`);
+    let contents = await downloadFile(latest.url);
+    await fs.promises.mkdir(path.dirname(desiredArtifact.path), { recursive: true });
+    await fs.promises.writeFile(desiredArtifact.path, contents);
+    await fs.promises.chmod(desiredArtifact.path, 0o755);
+
+    context.globalState.update("redscript-ide.version", latest.tagName);
+  }
+
+  channel.appendLine(`Using an artifact at ${desiredArtifact.path}`);
   channel.dispose();
 
-  return artifactPath;
+  return desiredArtifact.path;
 }
 
 async function downloadFile(url: string): Promise<Uint8Array> {
@@ -93,12 +103,13 @@ async function downloadFile(url: string): Promise<Uint8Array> {
     });
 }
 
-function getArtifactPath(context: ExtensionContext, artifact: string, version: string): string {
-  const parsed = path.parse(artifact);
-  return path.join(context.globalStorageUri.fsPath, "artifacts", `${parsed.name}-${version}`, artifact);
+async function getIdeExePath(context: ExtensionContext, version: string): Promise<{ path: string, exists: boolean }> {
+  const binaryPath = path.join(context.globalStorageUri.fsPath, "artifacts", `redscript-ide-${version}`, getExeName());
+  const exists = await fs.promises.access(binaryPath).then(() => true, () => false);
+  return { path: binaryPath, exists };
 }
 
-async function getLatestRelease(): Promise<{ tagName: string, url: string }> {
+async function getLatestRelease(): Promise<{ tagName: string, url: string } | undefined> {
   const url = "https://api.github.com/repos/jac3km4/redscript-ide/releases/latest";
   const response = await xhr({ url, followRedirects: 5, headers: { "User-Agent": "redscript-ide" } })
     .catch(error => {
@@ -109,15 +120,15 @@ async function getLatestRelease(): Promise<{ tagName: string, url: string }> {
     throw new Error(`Received an error code from Github: ${response.status}`);
   }
   const { tag_name, assets } = JSON.parse(response.responseText);
-  const binary = getBinaryName();
-  const exe = assets.find((asset: any) => asset.name === binary);
-  if (!exe) {
-    throw new Error(`No ${binary} in the latest release`);
+  const exeName = getExeName();
+  const exeAsset = assets.find((asset: any) => asset.name === exeName);
+  if (!exeAsset) {
+    throw new Error(`No ${exeName} in the latest release`);
   }
-  return { tagName: tag_name, url: exe.browser_download_url };
+  return { tagName: tag_name, url: exeAsset.browser_download_url };
 }
 
-function getBinaryName(): string {
+function getExeName(): string {
   let platform: string;
   switch (os.platform()) {
     case 'win32':
