@@ -1,7 +1,7 @@
 {
   "name": "redscript-ide-vscode",
-  "displayName": "redscript-ide-vscode",
-  "description": "Redscript IDE VSCode support",
+  "displayName": "Redscript IDE",
+  "description": "Redscript language server integration for VSCode",
   "publisher": "jac3km4",
   "version": "0.2.3",
   "repository": "https://github.com/jac3km4/redscript-ide-vscode",
