@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { workspace, ExtensionContext, window } from 'vscode';
+import * as vscode from 'vscode';
 import { xhr, getErrorStatusDescription } from 'request-light';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -15,14 +15,18 @@ import {
 } from 'vscode-languageclient/node';
 import path = require('path');
 
+const DAP_PORT = 8435;
+
 let client: LanguageClient;
 
-export async function activate(context: ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+  activateDebug(context);
+
   let exePath: string | undefined;
   try {
     exePath = await retrieveArtifact(context);
   } catch (error) {
-    window.showErrorMessage(`Failed to download the language server: ${error}`);
+    vscode.window.showErrorMessage(`Failed to download the language server: ${error}`);
     return;
   }
 
@@ -39,7 +43,7 @@ export async function activate(context: ExtensionContext) {
     documentSelector: [{ scheme: 'file', language: 'redscript' }],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.reds')
+      fileEvents: vscode.workspace.createFileSystemWatcher('**/.reds')
     }
   };
 
@@ -62,8 +66,23 @@ export async function deactivate() {
   return client.stop();
 }
 
-async function retrieveArtifact(context: ExtensionContext): Promise<string> {
-  const channel = window.createOutputChannel("Redscript");
+function activateDebug(context: vscode.ExtensionContext) {
+  context.subscriptions.push(vscode.commands.registerCommand('extension.redscript.attach', config => {
+    vscode.debug.startDebugging(undefined, {
+      type: 'redscript',
+      name: 'Attach to Cyberpunk 2077',
+      request: 'attach'
+    });
+  }));
+
+  const provider = new RedscriptDebugConfigurationProvider();
+  context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('redscript', provider));
+  const factory = new RedscriptDebugAdapterServerDescriptorFactory();
+  context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('redscript', factory));
+}
+
+async function retrieveArtifact(context: vscode.ExtensionContext): Promise<string> {
+  const channel = vscode.window.createOutputChannel("Redscript");
 
   const currentVersion: string | undefined = context.globalState.get("redscript-ide.version");
   const currentArtifact = currentVersion ? await getIdeExePath(context, currentVersion) : undefined;
@@ -103,7 +122,7 @@ async function downloadFile(url: string): Promise<Uint8Array> {
     });
 }
 
-async function getIdeExePath(context: ExtensionContext, version: string): Promise<{ path: string, exists: boolean }> {
+async function getIdeExePath(context: vscode.ExtensionContext, version: string): Promise<{ path: string, exists: boolean }> {
   const binaryPath = path.join(context.globalStorageUri.fsPath, "artifacts", `redscript-ide-${version}`, getExeName());
   const exists = await fs.promises.access(binaryPath).then(() => true, () => false);
   return { path: binaryPath, exists };
@@ -156,4 +175,25 @@ function getExeName(): string {
   }
 
   return `redscript-ide-${arch}-${platform}`;
+}
+
+
+class RedscriptDebugAdapterServerDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+  createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+    return new vscode.DebugAdapterServer(DAP_PORT);
+  }
+}
+
+class RedscriptDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+  resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
+    if (!config.type && !config.request && !config.name) {
+      const editor = vscode.window.activeTextEditor;
+      if (editor && editor.document.languageId === 'redscript') {
+        config.type = 'redscript';
+        config.name = 'Attach to Cyberpunk 2077';
+        config.request = 'attach';
+      }
+    }
+    return config;
+  }
 }

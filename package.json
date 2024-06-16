@@ -3,7 +3,7 @@
   "displayName": "Redscript IDE",
   "description": "Redscript language server integration for VSCode",
   "publisher": "jac3km4",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "repository": "https://github.com/jac3km4/redscript-ide-vscode",
   "engines": {
     "vscode": "^1.70.0"
@@ -39,7 +39,45 @@
           "description": "Path to the final.redscripts file to use when compiling, do not provide this unless you know what you're doing (Optional)"
         }
       }
-    }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "extension.redscript.attach",
+          "when": "resourceLangId == redscript"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "extension.redscript.attach",
+        "title": "Attach to Cyberpunk 2077",
+        "category": "Redscript",
+        "enablement": "!inDebugMode",
+        "icon": "$(debug-alt)"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "redscript"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "redscript",
+        "languages": [
+          "redscript"
+        ],
+        "label": "Redscript DAP",
+        "initialConfigurations": [
+          {
+            "type": "redscript",
+            "request": "attach",
+            "name": "Attach to Cyberpunk 2077"
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

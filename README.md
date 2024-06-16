@@ -18,5 +18,6 @@ To complete the setup, you need to provide the game installation path in prefere
 - go-to-definition
   - bonus: limited support for redmod (scripted functions)
 - formatting (beta)
+- debugger (requires [redscript-dap](https://github.com/jac3km4/redscript-dap))
 
 ![ide-gif](https://user-images.githubusercontent.com/11986158/135734766-b5423e2c-cf47-4836-97ba-5c771cef7cf2.gif)
