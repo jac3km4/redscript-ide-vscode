@@ -66,20 +66,6 @@ export async function deactivate() {
   return client.stop();
 }
 
-function activateDebug(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.commands.registerCommand('extension.redscript.attach', config => {
-    vscode.debug.startDebugging(undefined, {
-      type: 'redscript',
-      name: 'Attach to Cyberpunk 2077',
-      request: 'attach'
-    });
-  }));
-
-  const provider = new RedscriptDebugConfigurationProvider();
-  context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('redscript', provider));
-  const factory = new RedscriptDebugAdapterServerDescriptorFactory();
-  context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('redscript', factory));
-}
 
 async function retrieveArtifact(context: vscode.ExtensionContext): Promise<string> {
   const channel = vscode.window.createOutputChannel("Redscript");
@@ -177,22 +163,91 @@ function getExeName(): string {
   return `redscript-ide-${arch}-${platform}`;
 }
 
+function activateDebug(context: vscode.ExtensionContext) {
+  context.subscriptions.push(vscode.commands.registerCommand('extension.redscript.attach', config => {
+    getDebugPorts().then(ports => {
+      if (ports.length === 0) {
+        vscode.window.showInformationMessage(
+          `No game instances found, make sure you have the latest redscript-dap installed.
+You can also check '{gameDir}/red4ext/logs/redscript_dap-{timestamp}.log' for more information.
+`, "Take me to the latest release"
+        ).then((item) => {
+          if (item) {
+            vscode.env.openExternal(vscode.Uri.parse("https://github.com/jac3km4/redscript-dap/releases/latest"))
+          }
+        })
+
+        return;
+      }
+
+      let qp = vscode.window.createQuickPick()
+      qp.title = "Available game instances"
+      qp.items = ports.map(([port, time]) =>
+        ({ label: `Cyberpunk 2077 - ${time.toLocaleString()}`, description: port.toString() })
+      )
+      qp.onDidAccept(() => {
+        const port = qp.selectedItems[0]?.description;
+        if (port !== undefined) {
+          vscode.debug.startDebugging(undefined, {
+            type: 'redscript',
+            request: 'attach',
+            name: 'Attach to Cyberpunk 2077',
+            port: parseInt(port)
+          });
+          qp.hide()
+        }
+      })
+      qp.show()
+    })
+  }));
+
+  const provider = new RedscriptDebugConfigurationProvider();
+  context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('redscript', provider));
+  const factory = new RedscriptDebugAdapterServerDescriptorFactory();
+  context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('redscript', factory));
+}
+
+async function getDebugPorts(): Promise<[number, Date][]> {
+  const gameDir = vscode.workspace.getConfiguration('redscript').get<string>('gameDir');
+  if (!gameDir) {
+    return [];
+  }
+
+  const binPath = path.join(gameDir, 'bin', 'x64');
+  const binDir = await fs.promises.opendir(binPath);
+
+  let found: [number, Date][] = [];
+  for await (const ent of binDir) {
+    const [, port] = ent.name.match("dap\.([0-9]+)\.debug") || [];
+    if (port) {
+      const fullPath = path.join(binPath, ent.name);
+      const time = await fs.promises.stat(fullPath).then(stat => stat.mtimeMs, () => 0);
+      found.push([parseInt(port), new Date(time)]);
+    }
+  }
+
+  return found;
+}
 
 class RedscriptDebugAdapterServerDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
   createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-    return new vscode.DebugAdapterServer(DAP_PORT);
+    return new vscode.DebugAdapterServer(session.configuration.port);
   }
 }
 
 class RedscriptDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
   resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
-    if (!config.type && !config.request && !config.name) {
+    if (!config.type && !config.request && !config.name && !config.port) {
       const editor = vscode.window.activeTextEditor;
-      if (editor && editor.document.languageId === 'redscript') {
-        config.type = 'redscript';
-        config.name = 'Attach to Cyberpunk 2077';
-        config.request = 'attach';
-      }
+
+      getDebugPorts().then(([port]) => {
+        if (editor && editor.document.languageId === 'redscript' && port !== undefined) {
+          config.type = 'redscript';
+          config.request = 'attach';
+          config.name = 'Attach to Cyberpunk 2077';
+          config.port = port;
+        }
+      })
     }
     return config;
   }
