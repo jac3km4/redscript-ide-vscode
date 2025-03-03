@@ -3,7 +3,7 @@
   "displayName": "Redscript IDE",
   "description": "Redscript language server integration for VSCode",
   "publisher": "jac3km4",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "repository": "https://github.com/jac3km4/redscript-ide-vscode",
   "engines": {
     "vscode": "^1.70.0"
@@ -34,9 +34,10 @@
           "type": "string",
           "description": "Path to the Cyberpunk 2077 installation directory (should contain r6, tools, bin etc.)"
         },
-        "redscript.scriptCachePath": {
-          "type": "string",
-          "description": "Path to the final.redscripts file to use when compiling, do not provide this unless you know what you're doing (Optional)"
+        "redscript.prerelease": {
+          "type": "boolean",
+          "description": "Whether to use the prerelease version of the language server",
+          "default": false
         }
       }
     },
@@ -80,21 +81,26 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "lint": "eslint . --ext .ts,.tsx",
-    "watch": "tsc -watch -p ./"
+    "vscode:precompile": "npm run package",
+    "compile": "tsc -p ./tsconfig.json",
+    "watch": "tsc -watch -p ./tsconfig.json",
+    "prepackage": "npm run compile",
+    "package": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --format=cjs --external:vscode",
+    "postpackage": "vsce package",
+    "publish": "vsce publish"
   },
   "dependencies": {
-    "http-proxy-agent": "^7.0.0",
-    "https-proxy-agent": "^7.0.0",
-    "request-light": "^0.7.0",
+    "@octokit/rest": "^21.1.1",
+    "node-fetch": "^3.3.2",
     "vscode-languageclient": "^9.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@tsconfig/strictest": "^2.0.5",
+    "@types/node": "^22.13.8",
     "@types/vscode": "^1.70.0",
-    "typescript": "^5.0.0"
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.2",
+    "vsce": "^2.15.0"
   },
   "extensionDependencies": [
     "jackhumbert.redscript-syntax-highlighting"
