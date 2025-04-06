@@ -1,7 +1,7 @@
 {
   "name": "redscript-ide-vscode",
-  "displayName": "Redscript IDE",
-  "description": "Redscript language server integration for VSCode",
+  "displayName": "REDscript IDE",
+  "description": "REDscript language server integration for VSCode",
   "publisher": "jac3km4",
   "version": "0.3.0",
   "repository": "https://github.com/jac3km4/redscript-ide-vscode",
@@ -28,16 +28,15 @@
       }
     ],
     "configuration": {
-      "title": "Redscript",
+      "title": "REDscript",
       "properties": {
         "redscript.gameDir": {
           "type": "string",
           "description": "Path to the Cyberpunk 2077 installation directory (should contain r6, tools, bin etc.)"
         },
-        "redscript.prerelease": {
-          "type": "boolean",
-          "description": "Whether to use the prerelease version of the language server",
-          "default": false
+        "redscript.ideVersion": {
+          "type": "string",
+          "description": "Version of REDscript IDE to use, for example '0.2.0' (defaults to checking for latest)"
         }
       }
     },
@@ -53,7 +52,7 @@
       {
         "command": "extension.redscript.attach",
         "title": "Attach to Cyberpunk 2077",
-        "category": "Redscript",
+        "category": "REDscript",
         "enablement": "!inDebugMode",
         "icon": "$(debug-alt)"
       }
@@ -69,7 +68,7 @@
         "languages": [
           "redscript"
         ],
-        "label": "Redscript DAP",
+        "label": "REDscript DAP",
         "initialConfigurations": [
           {
             "type": "redscript",

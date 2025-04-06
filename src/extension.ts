@@ -18,7 +18,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const scriptCachePath = config.get<string>("scriptCachePath")
     ? config.get<string>("scriptCachePath")
     : undefined;
-  const usePrerelease = config.get<boolean>("prerelease") ? true : false;
+  const ideVersion = config.get<string>("ideVersion");
 
   activateDebug(context);
 
@@ -31,7 +31,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   let exePath: string | undefined;
   try {
-    exePath = await retrieveArtifact(context, usePrerelease);
+    exePath = await retrieveArtifact(context, ideVersion);
   } catch (error) {
     vscode.window.showErrorMessage(
       `Failed to download the language server: ${error}.`,
@@ -74,7 +74,7 @@ export async function deactivate() {
 
 async function retrieveArtifact(
   context: vscode.ExtensionContext,
-  usePrerelease: boolean,
+  ideVersion?: string,
 ): Promise<string> {
   const channel = vscode.window.createOutputChannel("Redscript");
 
@@ -84,28 +84,28 @@ async function retrieveArtifact(
   const currentArtifact = currentVersion
     ? await getIdeExePath(context, currentVersion)
     : undefined;
-  const latest = await getLatestRelease(usePrerelease).catch((err) => {
+  const release = await getRelease(ideVersion).catch((err) => {
     channel.appendLine(`Failed to get the latest release: ${err.message}`);
     return undefined;
   });
 
-  if (latest === undefined && currentArtifact?.exists) {
+  if (release === undefined && currentArtifact?.exists) {
     return currentArtifact.path;
-  } else if (latest === undefined) {
+  } else if (release === undefined) {
     throw new Error("Could not download redscript-ide from Github");
   }
 
-  const desiredArtifact = await getIdeExePath(context, latest.tagName);
+  const desiredArtifact = await getIdeExePath(context, release.tagName);
   if (!desiredArtifact.exists) {
-    channel.appendLine(`Artifact ${latest.tagName} not found, downloading...`);
-    let contents = await downloadFile(latest.url);
+    channel.appendLine(`Artifact ${release.tagName} not found, downloading...`);
+    let contents = await downloadFile(release.url);
     await fs.promises.mkdir(path.dirname(desiredArtifact.path), {
       recursive: true,
     });
     await fs.promises.writeFile(desiredArtifact.path, Buffer.from(contents));
     await fs.promises.chmod(desiredArtifact.path, 0o755);
 
-    context.globalState.update("redscript-ide.version", latest.tagName);
+    context.globalState.update("redscript-ide.version", release.tagName);
   }
 
   channel.appendLine(`Using an artifact at ${desiredArtifact.path}`);
@@ -140,24 +140,24 @@ async function getIdeExePath(
   return { path: binaryPath, exists };
 }
 
-async function getLatestRelease(
-  includePreReleases: boolean,
+async function getRelease(
+  wantedVersion?: string,
 ): Promise<{ tagName: string; url: string } | undefined> {
   const octokit = new Octokit();
   let release;
 
-  if (includePreReleases) {
-    const response = await octokit.repos.listReleases({
+  if (wantedVersion !== undefined) {
+    const response = await octokit.repos.getReleaseByTag({
       owner: "jac3km4",
       repo: "redscript-ide",
-      per_page: 1,
+      tag: `v${wantedVersion}`,
     });
 
     if (response.status !== 200) {
       throw new Error(`GitHub API error: ${response.status}`);
     }
 
-    release = response.data[0];
+    release = response.data;
     if (!release) {
       throw new Error(`No release found`);
     }
