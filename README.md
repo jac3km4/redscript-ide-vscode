@@ -1,5 +1,6 @@
 # redscript-ide-vscode
-VS Code extension for redscript, client for [the redscript IDE](https://github.com/jac3km4/redscript-ide).
+
+VS Code extension for REDscript, client for [the REDscript IDE](https://github.com/jac3km4/redscript-ide).
 
 ## installation
 
@@ -12,11 +13,13 @@ To complete the setup, you need to provide the game installation path in prefere
 <img src="https://user-images.githubusercontent.com/11986158/189502554-4feb3761-5b28-4db7-a459-66754eed6227.png" width="560" />
 
 ## features
+
 - error and warning diagnostics
 - autocompletion for methods and fields
 - hover for function definitions and types
 - go-to-definition
   - bonus: limited support for redmod (scripted functions)
+- workspace symbols
 - formatting (beta)
 - debugger (requires [redscript-dap](https://github.com/jac3km4/redscript-dap))
 - hooks for external tools
@@ -24,14 +27,19 @@ To complete the setup, you need to provide the game installation path in prefere
 ![ide-gif](https://user-images.githubusercontent.com/11986158/135734766-b5423e2c-cf47-4836-97ba-5c771cef7cf2.gif)
 
 ## configuration
-The language server will attempt to load a TOML file named `.redscript-ide` from every workspace folder.
-This file can contain some configuration options:
-- `redscript_dir` maps the source directory to a different folder than the workspace folder root
-- `hooks` allows you to configure hooks on certain events, an example would be creating a file to signal something to an external tool
-  - for instance, you can trigger a reload of RedHotTools when the workspace successfully typechecks:
-    ```toml
-    [[hooks.successful_check]]
-    # you can use {game_dir} to refer to the game directory if it's configured for the extension,
-    # another available variable is {workspace_dir} which refers to the workspace directory that contains the checked file
-    create_file = "{game_dir}\\red4ext\\plugins\\RedHotTools\\.hot-scripts"
-    ```
+
+The language server will attempt to load a TOML file named `.redscript` from every workspace folder.
+This file can contain the following configuration options:
+
+- `source_roots` allows you to specify source directories where the compiler should look for REDscript files, defaults to `["."]`
+- `format` block allows you to configure the formatter, you can find the available options [here](https://github.com/jac3km4/redscript/blob/c3d0ec6f12583eccc51b5a482583e8fb6641ce8d/crates/dotfile/src/lib.rs#L36-L43)
+
+Here's an example `.redscript` file:
+
+```toml
+source_roots = [".", "../red4ext/plugins"]
+
+[format]
+indent = 2
+max_width = 80
+```
