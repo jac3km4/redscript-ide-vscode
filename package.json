@@ -3,7 +3,7 @@
   "displayName": "REDscript IDE",
   "description": "REDscript language server integration for VSCode",
   "publisher": "jac3km4",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "repository": "https://github.com/jac3km4/redscript-ide-vscode",
   "engines": {
     "vscode": "^1.70.0"
@@ -36,7 +36,11 @@
         },
         "redscript.ideVersion": {
           "type": "string",
-          "description": "Version of REDscript IDE to use, for example '0.2.0' (defaults to checking for latest)"
+          "description": "Version of REDscript IDE to download, for example '0.2.0' (optional, the default behavior is to check for latest)"
+        },
+        "redscript.idePath": {
+          "type": "string",
+          "description": "Path to a local REDscript IDE executable to use (optional, prevents downloads from the Github API)"
         }
       }
     },

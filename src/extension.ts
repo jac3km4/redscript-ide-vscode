@@ -19,6 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
     ? config.get<string>("scriptCachePath")
     : undefined;
   const ideVersion = config.get<string>("ideVersion");
+  let idePath = config.get<string>("idePath");
 
   activateDebug(context);
 
@@ -29,19 +30,20 @@ export async function activate(context: vscode.ExtensionContext) {
     return;
   }
 
-  let exePath: string | undefined;
-  try {
-    exePath = await retrieveArtifact(context, ideVersion);
-  } catch (error) {
-    vscode.window.showErrorMessage(
-      `Failed to download the language server: ${error}.`,
-    );
-    return;
+  if (!idePath) {
+    try {
+      idePath = await retrieveArtifact(context, ideVersion);
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `Failed to download the language server: ${error}.`,
+      );
+      return;
+    }
   }
 
   const serverOptions: ServerOptions = {
-    run: { command: exePath },
-    debug: { command: exePath },
+    run: { command: idePath },
+    debug: { command: idePath },
   };
 
   const clientOptions: LanguageClientOptions = {
