@@ -87,7 +87,7 @@ async function retrieveArtifact(
     ? await getIdeExePath(context, currentVersion)
     : undefined;
   const release = await getRelease(ideVersion).catch((err) => {
-    channel.appendLine(`Failed to get the latest release: ${err.message}`);
+    vscode.window.showWarningMessage(`Failed to get the latest REDscript release: ${err.message}`);
     return undefined;
   });
 
@@ -148,7 +148,7 @@ async function getRelease(
   const octokit = new Octokit();
   let release;
 
-  if (wantedVersion !== undefined) {
+  if (wantedVersion) {
     const response = await octokit.repos.getReleaseByTag({
       owner: "jac3km4",
       repo: "redscript-ide",
@@ -304,8 +304,7 @@ async function getDebugPorts(): Promise<[number, Date][]> {
 }
 
 class RedscriptDebugAdapterServerDescriptorFactory
-  implements vscode.DebugAdapterDescriptorFactory
-{
+  implements vscode.DebugAdapterDescriptorFactory {
   createDebugAdapterDescriptor(
     session: vscode.DebugSession,
     _executable: vscode.DebugAdapterExecutable | undefined,
@@ -315,8 +314,7 @@ class RedscriptDebugAdapterServerDescriptorFactory
 }
 
 class RedscriptDebugConfigurationProvider
-  implements vscode.DebugConfigurationProvider
-{
+  implements vscode.DebugConfigurationProvider {
   resolveDebugConfiguration(
     _folder: vscode.WorkspaceFolder | undefined,
     config: vscode.DebugConfiguration,
