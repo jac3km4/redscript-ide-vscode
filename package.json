@@ -59,6 +59,10 @@
           "type": "string",
           "description": "Path to the Cyberpunk 2077 installation directory (should contain r6, tools, bin etc.)"
         },
+        "redscript.scriptCachePath": {
+          "type": "string",
+          "description": "Path to the compiled script cache file to load (optional, can be used instead of redscript.gameDir)"
+        },
         "redscript.ideVersion": {
           "type": "string",
           "description": "Version of REDscript IDE to download, for example '0.2.0' (optional, the default behavior is to check for latest)"

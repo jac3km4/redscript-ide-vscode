@@ -79,6 +79,10 @@ but does not imply that a construct is supported by analysis.
 
 ## configuration
 
+Set `redscript.scriptCachePath` to a compiled script cache file to use it instead
+of locating the cache through `redscript.gameDir`. The debugger still requires
+`redscript.gameDir` to discover running game instances.
+
 The language server will attempt to load a TOML file named `.redscript` from every workspace folder.
 This file can contain the following configuration options:
 
