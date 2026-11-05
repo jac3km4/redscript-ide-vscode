@@ -12,7 +12,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:redscript"
+    "onLanguage:redscript",
+    "onLanguage:redmod"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -24,7 +25,31 @@
         ],
         "extensions": [
           ".reds"
-        ]
+        ],
+        "configuration": "./redscript-language-configuration.json"
+      },
+      {
+        "id": "redmod",
+        "aliases": [
+          "REDmod",
+          "redmod"
+        ],
+        "extensions": [
+          ".script"
+        ],
+        "configuration": "./redmod-language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "redscript",
+        "scopeName": "source.redscript",
+        "path": "./syntaxes/redscript.tmLanguage.json"
+      },
+      {
+        "language": "redmod",
+        "scopeName": "source.redmod",
+        "path": "./syntaxes/redmod.tmLanguage.json"
       }
     ],
     "configuration": {
@@ -86,6 +111,7 @@
   "scripts": {
     "vscode:precompile": "npm run package",
     "compile": "tsc -p ./tsconfig.json",
+    "test": "node --test test/*.test.cjs",
     "watch": "tsc -watch -p ./tsconfig.json",
     "prepackage": "npm run compile",
     "package": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --format=cjs --external:vscode",
@@ -103,9 +129,8 @@
     "@types/vscode": "^1.70.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.8.2",
-    "vsce": "^2.15.0"
-  },
-  "extensionDependencies": [
-    "jackhumbert.redscript-syntax-highlighting"
-  ]
+    "vsce": "^2.15.0",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
+  }
 }

@@ -1,0 +1,173 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "REDscript",
+  "scopeName": "source.redscript",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    {
+      "match": "@[A-Za-z_][A-Za-z_0-9]*",
+      "name": "entity.name.function.annotation.redscript"
+    },
+    {
+      "match": "\\b(class|struct|enum)(\\s+)([A-Za-z_][A-Za-z_0-9]*)",
+      "captures": {
+        "1": { "name": "storage.type.redscript" },
+        "3": { "name": "entity.name.type.redscript" }
+      }
+    },
+    {
+      "match": "\\b(func)(\\s+)([A-Za-z_][A-Za-z_0-9]*)",
+      "captures": {
+        "1": { "name": "storage.type.function.redscript" },
+        "3": { "name": "entity.name.function.redscript" }
+      }
+    },
+    {
+      "match": "\\b(module|import)\\b",
+      "name": "keyword.control.import.redscript"
+    },
+    {
+      "match": "\\b(public|private|protected|abstract|cb|const|editable|exec|final|importonly|instanceeditable|inlined|native|persistent|quest|replicated|static|testonly|opt|out|skip|explicit|implicit)\\b",
+      "name": "storage.modifier.redscript"
+    },
+    {
+      "match": "\\b(if|else|while|for|in|switch|case|default|break|continue|return)\\b",
+      "name": "keyword.control.redscript"
+    },
+    {
+      "match": "\\b(let|func|class|struct|enum)\\b",
+      "name": "storage.type.redscript"
+    },
+    {
+      "match": "\\b(extends|new|as)\\b",
+      "name": "keyword.other.redscript"
+    },
+    {
+      "match": "\\b(true|false|null)\\b",
+      "name": "constant.language.redscript"
+    },
+    {
+      "match": "\\b(this|super)\\b",
+      "name": "variable.language.redscript"
+    },
+    {
+      "match": "\\b(Int8|Int16|Int32|Int64|Uint8|Uint16|Uint32|Uint64|Float|Double|Bool|String|CName|TweakDBID|ResRef|Variant|Void|array|ref|wref|script_ref)\\b",
+      "name": "support.type.redscript"
+    },
+    {
+      "match": "[A-Za-z_][A-Za-z_0-9]*",
+      "name": "variable.other.redscript"
+    },
+    {
+      "match": "->|==|!=|<=|>=|&&|\\|\\||[+*/&|=-]=|[+*/%=&|^!~<>?-]",
+      "name": "keyword.operator.redscript"
+    },
+    { "include": "#parentheses" },
+    {
+      "match": "[{}\\[\\]]",
+      "name": "punctuation.section.redscript"
+    },
+    {
+      "match": "[.,:;]",
+      "name": "punctuation.separator.redscript"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "begin": "///(?!/)",
+          "end": "(?=[\\r\\n\\x{000B}\\x{000C}\\x{0085}\\x{2028}\\x{2029}])|$",
+          "name": "comment.line.documentation.redscript"
+        },
+        {
+          "begin": "//",
+          "end": "(?=[\\r\\n\\x{000B}\\x{000C}\\x{0085}\\x{2028}\\x{2029}])|$",
+          "name": "comment.line.double-slash.redscript"
+        },
+        { "include": "#block-comment" }
+      ]
+    },
+    "block-comment": {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.redscript",
+      "patterns": [{ "include": "#block-comment" }]
+    },
+    "strings": {
+      "comment": "Community lexer.rs: only double quotes; n/r/t literals share escapes, while s literals additionally interpolate with \\(…)",
+      "patterns": [
+        {
+          "begin": "\\b(s)(\")",
+          "beginCaptures": { "1": { "name": "storage.type.string.redscript" } },
+          "end": "\"",
+          "name": "string.quoted.double.interpolated.redscript",
+          "patterns": [
+            { "include": "#interpolation" },
+            { "include": "#escapes" }
+          ]
+        },
+        {
+          "begin": "\\b(n|r|t)(\")",
+          "beginCaptures": { "1": { "name": "storage.type.string.redscript" } },
+          "end": "\"",
+          "name": "string.quoted.double.redscript",
+          "patterns": [{ "include": "#escapes" }]
+        },
+        {
+          "begin": "\"",
+          "end": "\"",
+          "name": "string.quoted.double.redscript",
+          "patterns": [{ "include": "#escapes" }]
+        }
+      ]
+    },
+    "escapes": {
+      "patterns": [
+        {
+          "match": "\\\\(?:[nrt'\"\\\\]|u\\{[0-9A-Fa-f]{1,6}\\})",
+          "name": "constant.character.escape.redscript"
+        },
+        {
+          "match": "\\\\.",
+          "name": "invalid.illegal.escape.redscript"
+        }
+      ]
+    },
+    "interpolation": {
+      "begin": "\\\\\\(",
+      "beginCaptures": { "0": { "name": "punctuation.section.interpolation.begin.redscript" } },
+      "end": "\\)",
+      "endCaptures": { "0": { "name": "punctuation.section.interpolation.end.redscript" } },
+      "name": "meta.interpolation.redscript",
+      "contentName": "meta.embedded.line.redscript",
+      "patterns": [{ "include": "$self" }]
+    },
+    "parentheses": {
+      "begin": "\\(",
+      "end": "\\)",
+      "beginCaptures": { "0": { "name": "punctuation.section.redscript" } },
+      "endCaptures": { "0": { "name": "punctuation.section.redscript" } },
+      "patterns": [{ "include": "$self" }]
+    },
+    "numbers": {
+      "comment": "Decimal integers use u/l/ul; Float requires a decimal point and Double uses d. Signs are separate operators. Highlighting does not check ranges.",
+      "patterns": [
+        {
+          "match": "(?<![A-Za-z_0-9.])(?:0|[1-9][0-9]*)\\.[0-9]*(?:[eE][+-]?[0-9]+)?d?(?![A-Za-z_0-9.])",
+          "name": "constant.numeric.redscript"
+        },
+        {
+          "match": "(?<![A-Za-z_0-9.])(?:0|[1-9][0-9]*)(?:[eE][+-]?[0-9]+)?d(?![A-Za-z_0-9.])",
+          "name": "constant.numeric.redscript"
+        },
+        {
+          "match": "(?<![A-Za-z_0-9.])(?:0|[1-9][0-9]*)(?:ul|u|l)?(?![A-Za-z_0-9.])",
+          "name": "constant.numeric.redscript"
+        }
+      ]
+    }
+  }
+}

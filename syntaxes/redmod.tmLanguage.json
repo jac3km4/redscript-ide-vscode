@@ -1,0 +1,132 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "REDmod",
+  "scopeName": "source.redmod",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    {
+      "match": "(@)(module|using)\\b",
+      "name": "keyword.control.directive.redmod"
+    },
+    {
+      "match": "@[A-Za-z_][A-Za-z_0-9]*",
+      "name": "entity.name.function.annotation.redmod"
+    },
+    {
+      "match": "\\b(class|struct|enum)(\\s+)([A-Za-z_][A-Za-z_0-9]*)",
+      "captures": {
+        "1": { "name": "storage.type.redmod" },
+        "3": { "name": "entity.name.type.redmod" }
+      }
+    },
+    {
+      "match": "\\b(function|event)(\\s+)([A-Za-z_][A-Za-z_0-9]*)",
+      "captures": {
+        "1": { "name": "storage.type.function.redmod" },
+        "3": { "name": "entity.name.function.redmod" }
+      }
+    },
+    {
+      "match": "\\b(public|private|protected|abstract|const|exec|final|importonly|import|persistent|quest|static|editable|instanceeditable|inlined|replicated|testonly|override|export|virtual|constexpr|mutable|optional|out|skip|implicit)\\b",
+      "name": "storage.modifier.redmod"
+    },
+    {
+      "match": "\\b(if|else|while|do|for|switch|case|default|break|continue|return)\\b",
+      "name": "keyword.control.redmod"
+    },
+    {
+      "match": "\\b(var|let|class|struct|enum|function|event|operator|cast)\\b",
+      "name": "storage.type.redmod"
+    },
+    {
+      "match": "\\b(extends|new|as|hint)\\b",
+      "name": "keyword.other.redmod"
+    },
+    {
+      "match": "\\b(true|false|NULL)\\b",
+      "name": "constant.language.redmod"
+    },
+    {
+      "match": "\\b(this|super)\\b",
+      "name": "variable.language.redmod"
+    },
+    {
+      "match": "\\b(array|ref|wref|weak|script_ref|mixedRef)\\b",
+      "name": "support.type.redmod"
+    },
+    {
+      "match": "\\bCast(?=\\s*<)",
+      "name": "support.function.redmod"
+    },
+    {
+      "match": "[A-Za-z_][A-Za-z_0-9]*",
+      "name": "variable.other.redmod"
+    },
+    {
+      "match": "->|[+*/%=&|^!~<>?-]=?",
+      "name": "keyword.operator.redmod"
+    },
+    {
+      "match": "[{}()\\[\\]]",
+      "name": "punctuation.section.redmod"
+    },
+    {
+      "match": "[.,:;]",
+      "name": "punctuation.separator.redmod"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "begin": "///(?!/)",
+          "end": "(?=[\\r\\n\\x{000B}\\x{000C}\\x{0085}\\x{2028}\\x{2029}])|$",
+          "name": "comment.line.documentation.redmod"
+        },
+        {
+          "begin": "//",
+          "end": "(?=[\\r\\n\\x{000B}\\x{000C}\\x{0085}\\x{2028}\\x{2029}])|$",
+          "name": "comment.line.double-slash.redmod"
+        },
+        { "include": "#block-comment" }
+      ]
+    },
+    "block-comment": {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.redmod",
+      "patterns": [{ "include": "#block-comment" }]
+    },
+    "strings": {
+      "comment": "REDmod literals are raw: backslashes never escape the closing delimiter. R/T prefixes are uppercase; interpolation is not supported.",
+      "patterns": [
+        {
+          "begin": "\\b(n|R|T)(\")",
+          "beginCaptures": { "1": { "name": "storage.type.string.redmod" } },
+          "end": "\"",
+          "name": "string.quoted.double.redmod"
+        },
+        {
+          "begin": "\"",
+          "end": "\"",
+          "name": "string.quoted.double.redmod"
+        },
+        {
+          "begin": "'",
+          "end": "'",
+          "name": "string.quoted.single.redmod"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "match": "(?<![A-Za-z_0-9])(?:(?:0|[1-9][0-9]*)(?:\\.(?!\\.)[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?[fdl]?(?![A-Za-z_0-9])",
+          "name": "constant.numeric.redmod"
+        }
+      ]
+    }
+  }
+}

@@ -46,10 +46,16 @@ export async function activate(context: vscode.ExtensionContext) {
     debug: { command: idePath },
   };
 
+  const watcher = vscode.workspace.createFileSystemWatcher("**/*.{reds,script}");
+  context.subscriptions.push(watcher);
+
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ scheme: "file", language: "redscript" }],
+    documentSelector: [
+      { scheme: "file", language: "redscript" },
+      { scheme: "file", language: "redmod" },
+    ],
     synchronize: {
-      fileEvents: vscode.workspace.createFileSystemWatcher("**/.reds"),
+      fileEvents: watcher,
     },
     initializationOptions: {
       game_dir: gameDir,
