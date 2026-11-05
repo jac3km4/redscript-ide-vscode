@@ -1,5 +1,11 @@
-.vscode
-node_modules
-src/
-test/
-tsconfig.json
+**
+!package.json
+!README.md
+!LICENSE
+!out/
+!out/extension.js
+!syntaxes/
+!syntaxes/redscript.tmLanguage.json
+!syntaxes/redmod.tmLanguage.json
+!redscript-language-configuration.json
+!redmod-language-configuration.json

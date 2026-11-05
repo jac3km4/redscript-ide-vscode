@@ -109,14 +109,14 @@
     ]
   },
   "scripts": {
-    "vscode:precompile": "npm run package",
-    "compile": "tsc -p ./tsconfig.json",
+    "vscode:prepublish": "npm run compile",
+    "typecheck": "tsc --noEmit -p ./tsconfig.json",
+    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --format=cjs --target=node20 --external:vscode",
+    "compile": "npm run typecheck && npm run build",
     "test": "node --test test/*.test.cjs",
-    "watch": "tsc -watch -p ./tsconfig.json",
-    "prepackage": "npm run compile",
-    "package": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --format=cjs --external:vscode",
-    "postpackage": "vsce package",
-    "publish": "vsce publish"
+    "watch": "npm run build -- --watch",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
   },
   "dependencies": {
     "@octokit/rest": "^21.1.1",
