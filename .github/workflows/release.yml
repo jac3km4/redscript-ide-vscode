@@ -1,24 +1,29 @@
+name: Release extension
+
 on:
   release:
-    types: [created]
+    types: [published]
 
-name: Build Extension
+permissions:
+  contents: read
+
 jobs:
-  deploy:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v2
-      - run: npm install
-      - uses: lannonbr/vsce-action@3.0.0
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          args: "package"
-      - name: Set version
-        run: echo PACKAGE_VERSION=$(node -p 'require("./package.json").version') >> $GITHUB_ENV
-      - uses: actions/upload-release-asset@v1
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run package
+      - name: Upload VSIX
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./redscript-ide-vscode-${{ env.PACKAGE_VERSION }}.vsix
-          asset_name: redscript-ide-vscode-${{ env.PACKAGE_VERSION }}.vsix
-          asset_content_type: application/vsix
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" ./*.vsix --repo "$GH_REPO"
