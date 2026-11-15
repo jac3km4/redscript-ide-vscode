@@ -284,11 +284,16 @@ async function getDebugPorts(): Promise<[number, Date][]> {
   }
 
   const binPath = path.join(gameDir, "bin", "x64");
-  const binDir = await fs.promises.opendir(binPath);
+  let binDir: fs.Dir;
+  try {
+    binDir = await fs.promises.opendir(binPath);
+  } catch {
+    return [];
+  }
 
   let found: [number, Date][] = [];
   for await (const ent of binDir) {
-    const [, port] = ent.name.match("dap\.([0-9]+)\.debug") || [];
+    const [, port] = ent.name.match(/dap\.([0-9]+)\.debug/) || [];
     if (port) {
       const fullPath = path.join(binPath, ent.name);
       const time = await fs.promises.stat(fullPath).then(
@@ -314,26 +319,25 @@ class RedscriptDebugAdapterServerDescriptorFactory
 
 class RedscriptDebugConfigurationProvider
   implements vscode.DebugConfigurationProvider {
-  resolveDebugConfiguration(
+  async resolveDebugConfiguration(
     _folder: vscode.WorkspaceFolder | undefined,
     config: vscode.DebugConfiguration,
     _token?: vscode.CancellationToken,
-  ): vscode.ProviderResult<vscode.DebugConfiguration> {
+  ): Promise<vscode.DebugConfiguration> {
     if (!config.type && !config.request && !config.name && !config["port"]) {
       const editor = vscode.window.activeTextEditor;
+      const [first] = await getDebugPorts();
 
-      getDebugPorts().then(([port]) => {
-        if (
-          editor &&
-          editor.document.languageId === "redscript" &&
-          port !== undefined
-        ) {
-          config.type = "redscript";
-          config.request = "attach";
-          config.name = "Attach to Cyberpunk 2077";
-          config["port"] = port;
-        }
-      });
+      if (
+        editor &&
+        editor.document.languageId === "redscript" &&
+        first !== undefined
+      ) {
+        config.type = "redscript";
+        config.request = "attach";
+        config.name = "Attach to Cyberpunk 2077";
+        config["port"] = first[0];
+      }
     }
     return config;
   }
