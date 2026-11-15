@@ -1,29 +1,33 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
-import * as os from "os";
+import type { Dir } from "node:fs";
+import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import path from "node:path";
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node";
-import path from "path";
 
-let client: LanguageClient;
+let client: LanguageClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration("redscript");
-  const gameDir = config.get("gameDir") ? config.get("gameDir") : undefined;
-  const scriptCachePath = config.get<string>("scriptCachePath")
-    ? config.get<string>("scriptCachePath")
-    : undefined;
+  const gameDir = config.get<string>("gameDir") || undefined;
+  const scriptCachePath = config.get<string>("scriptCachePath") || undefined;
   const ideVersion = config.get<string>("ideVersion");
   let idePath = config.get<string>("idePath");
+
+  const outputChannel = vscode.window.createOutputChannel("Redscript", {
+    log: true,
+  });
+  context.subscriptions.push(outputChannel);
 
   activateDebug(context);
 
   if (!idePath) {
     try {
-      idePath = await retrieveArtifact(context, ideVersion);
+      idePath = await retrieveArtifact(context, outputChannel, ideVersion);
     } catch (error) {
       vscode.window.showErrorMessage(
         `Failed to download the language server: ${error}.`,
@@ -48,6 +52,7 @@ export async function activate(context: vscode.ExtensionContext) {
     synchronize: {
       fileEvents: watcher,
     },
+    outputChannel,
     initializationOptions: {
       game_dir: gameDir,
       script_cache_path: scriptCachePath,
@@ -61,7 +66,8 @@ export async function activate(context: vscode.ExtensionContext) {
     clientOptions,
   );
 
-  client.start();
+  context.subscriptions.push(client);
+  await client.start();
 }
 
 export async function deactivate() {
@@ -73,18 +79,20 @@ export async function deactivate() {
 
 async function retrieveArtifact(
   context: vscode.ExtensionContext,
+  channel: vscode.LogOutputChannel,
   ideVersion?: string,
 ): Promise<string> {
-  const channel = vscode.window.createOutputChannel("Redscript");
-
   const currentVersion: string | undefined = context.globalState.get(
     "redscript-ide.version",
   );
   const currentArtifact = currentVersion
     ? await getIdeExePath(context, currentVersion)
     : undefined;
-  const release = await getRelease(ideVersion).catch((err) => {
-    vscode.window.showWarningMessage(`Failed to get the latest REDscript release: ${err.message}`);
+  const release = await getRelease(ideVersion).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    vscode.window.showWarningMessage(
+      `Failed to get the latest REDscript release: ${message}`,
+    );
     return undefined;
   });
 
@@ -96,30 +104,28 @@ async function retrieveArtifact(
 
   const desiredArtifact = await getIdeExePath(context, release.tagName);
   if (!desiredArtifact.exists) {
-    channel.appendLine(`Artifact ${release.tagName} not found, downloading...`);
-    let contents = await downloadFile(release.url);
-    await fs.promises.mkdir(path.dirname(desiredArtifact.path), {
+    channel.info(`Artifact ${release.tagName} not found, downloading...`);
+    const contents = await downloadFile(release.url);
+    await fs.mkdir(path.dirname(desiredArtifact.path), {
       recursive: true,
     });
-    await fs.promises.writeFile(desiredArtifact.path, Buffer.from(contents));
-    await fs.promises.chmod(desiredArtifact.path, 0o755);
+    await fs.writeFile(desiredArtifact.path, Buffer.from(contents));
+    await fs.chmod(desiredArtifact.path, 0o755);
 
-    context.globalState.update("redscript-ide.version", release.tagName);
+    await context.globalState.update("redscript-ide.version", release.tagName);
   }
 
-  channel.appendLine(`Using an artifact at ${desiredArtifact.path}`);
-  channel.dispose();
+  channel.info(`Using an artifact at ${desiredArtifact.path}`);
 
   return desiredArtifact.path;
 }
 
 async function downloadFile(url: string): Promise<ArrayBuffer> {
-  return fetch(url).then((response) => {
-    if (!response.ok) {
-      throw new Error(`Failed to download file: ${response.statusText}`);
-    }
-    return response.arrayBuffer();
-  });
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download file: ${response.statusText}`);
+  }
+  return response.arrayBuffer();
 }
 
 async function getIdeExePath(
@@ -132,7 +138,7 @@ async function getIdeExePath(
     `redscript-ide-${version}`,
     getExeName(),
   );
-  const exists = await fs.promises.access(binaryPath).then(
+  const exists = await fs.access(binaryPath).then(
     () => true,
     () => false,
   );
@@ -211,49 +217,42 @@ function getExeName(): string {
 
 function activateDebug(context: vscode.ExtensionContext) {
   context.subscriptions.push(
-    vscode.commands.registerCommand("extension.redscript.attach", () => {
-      getDebugPorts().then((ports) => {
-        if (ports.length === 0) {
-          vscode.window
-            .showInformationMessage(
-              `No game instances found, make sure you have the latest redscript-dap installed.
+    vscode.commands.registerCommand("extension.redscript.attach", async () => {
+      const ports = await getDebugPorts();
+      if (ports.length === 0) {
+        const item = await vscode.window.showInformationMessage(
+          `No game instances found, make sure you have the latest redscript-dap installed.
 You can also check '{gameDir}/red4ext/logs/redscript_dap-{timestamp}.log' for more information.
 `,
-              "Take me to the latest release",
-            )
-            .then((item) => {
-              if (item) {
-                vscode.env.openExternal(
-                  vscode.Uri.parse(
-                    "https://github.com/jac3km4/redscript-dap/releases/latest",
-                  ),
-                );
-              }
-            });
-
-          return;
+          "Take me to the latest release",
+        );
+        if (item) {
+          await vscode.env.openExternal(
+            vscode.Uri.parse(
+              "https://github.com/jac3km4/redscript-dap/releases/latest",
+            ),
+          );
         }
+        return;
+      }
 
-        let qp = vscode.window.createQuickPick();
-        qp.title = "Available game instances";
-        qp.items = ports.map(([port, time]) => ({
+      const selected = await vscode.window.showQuickPick(
+        ports.map(([port, time]) => ({
           label: `Cyberpunk 2077 - ${time.toLocaleString()}`,
           description: port.toString(),
-        }));
-        qp.onDidAccept(() => {
-          const port = qp.selectedItems[0]?.description;
-          if (port !== undefined) {
-            vscode.debug.startDebugging(undefined, {
-              type: "redscript",
-              request: "attach",
-              name: "Attach to Cyberpunk 2077",
-              port: parseInt(port),
-            });
-            qp.hide();
-          }
+          port,
+        })),
+        { title: "Available game instances" },
+      );
+
+      if (selected !== undefined) {
+        await vscode.debug.startDebugging(undefined, {
+          type: "redscript",
+          request: "attach",
+          name: "Attach to Cyberpunk 2077",
+          port: selected.port,
         });
-        qp.show();
-      });
+      }
     }),
   );
 
@@ -276,23 +275,23 @@ async function getDebugPorts(): Promise<[number, Date][]> {
   }
 
   const binPath = path.join(gameDir, "bin", "x64");
-  let binDir: fs.Dir;
+  let binDir: Dir;
   try {
-    binDir = await fs.promises.opendir(binPath);
+    binDir = await fs.opendir(binPath);
   } catch {
     return [];
   }
 
-  let found: [number, Date][] = [];
+  const found: [number, Date][] = [];
   for await (const ent of binDir) {
     const [, port] = ent.name.match(/dap\.([0-9]+)\.debug/) || [];
     if (port) {
       const fullPath = path.join(binPath, ent.name);
-      const time = await fs.promises.stat(fullPath).then(
+      const time = await fs.stat(fullPath).then(
         (stat) => stat.mtimeMs,
         () => 0,
       );
-      found.push([parseInt(port), new Date(time)]);
+      found.push([parseInt(port, 10), new Date(time)]);
     }
   }
 
