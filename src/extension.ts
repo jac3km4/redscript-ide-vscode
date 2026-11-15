@@ -7,8 +7,6 @@ import {
   ServerOptions,
 } from "vscode-languageclient/node";
 import path from "path";
-import fetch from "node-fetch";
-import { Octokit } from "@octokit/rest";
 
 let client: LanguageClient;
 
@@ -141,42 +139,36 @@ async function getIdeExePath(
   return { path: binaryPath, exists };
 }
 
+interface GitHubRelease {
+  tag_name: string;
+  assets: Array<{
+    name?: string;
+    browser_download_url: string;
+  }>;
+}
+
 async function getRelease(
   wantedVersion?: string,
 ): Promise<{ tagName: string; url: string } | undefined> {
-  const octokit = new Octokit();
-  let release;
+  const baseUrl = "https://api.github.com/repos/jac3km4/redscript-ide/releases";
+  const url = wantedVersion
+    ? `${baseUrl}/tags/v${encodeURIComponent(wantedVersion)}`
+    : `${baseUrl}/latest`;
 
-  if (wantedVersion) {
-    const response = await octokit.repos.getReleaseByTag({
-      owner: "jac3km4",
-      repo: "redscript-ide",
-      tag: `v${wantedVersion}`,
-    });
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "redscript-ide-vscode",
+    },
+  });
 
-    if (response.status !== 200) {
-      throw new Error(`GitHub API error: ${response.status}`);
-    }
+  if (!response.ok) {
+    throw new Error(`GitHub API error: ${response.status}`);
+  }
 
-    release = response.data;
-    if (!release) {
-      throw new Error(`No release found`);
-    }
-  } else {
-    const response = await octokit.repos.getLatestRelease({
-      owner: "jac3km4",
-      repo: "redscript-ide",
-      per_page: 1,
-    });
-
-    if (response.status !== 200) {
-      throw new Error(`GitHub API error: ${response.status}`);
-    }
-
-    release = response.data;
-    if (!release) {
-      throw new Error(`No release found`);
-    }
+  const release = (await response.json()) as GitHubRelease | undefined;
+  if (!release) {
+    throw new Error(`No release found`);
   }
 
   const exeName = getExeName();

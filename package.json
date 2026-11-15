@@ -123,8 +123,6 @@
     "publish": "vsce publish --no-dependencies"
   },
   "dependencies": {
-    "@octokit/rest": "^21.1.1",
-    "node-fetch": "^3.3.2",
     "vscode-languageclient": "^11.0.0"
   },
   "devDependencies": {
