@@ -57,7 +57,7 @@
       "properties": {
         "redscript.gameDir": {
           "type": "string",
-          "description": "Path to the Cyberpunk 2077 installation directory (should contain r6, tools, bin etc.)"
+          "description": "Path to the Cyberpunk 2077 installation directory (optional, should contain r6, tools, bin etc.)"
         },
         "redscript.scriptCachePath": {
           "type": "string",

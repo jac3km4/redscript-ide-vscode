@@ -23,13 +23,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   activateDebug(context);
 
-  if (gameDir === undefined && scriptCachePath === undefined) {
-    vscode.window.showErrorMessage(
-      "You're missing basic configuration for the REDscript extension.",
-    );
-    return;
-  }
-
   if (!idePath) {
     try {
       idePath = await retrieveArtifact(context, ideVersion);

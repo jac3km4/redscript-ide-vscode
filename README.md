@@ -8,7 +8,7 @@ This extension can be installed from the [VSCode marketplace](https://marketplac
 
 <img src="https://github.com/jac3km4/redscript/assets/11986158/04dc3c66-fd1b-4198-b365-8875e850c602"  width="240" />
 
-To complete the setup, you need to provide the game installation path in preferences:
+Optionally, you can provide the game installation path (`redscript.gameDir`) in preferences to load game scripts and enable debugger support:
 
 <img src="https://user-images.githubusercontent.com/11986158/189502554-4feb3761-5b28-4db7-a459-66754eed6227.png" width="560" />
 
@@ -79,6 +79,7 @@ but does not imply that a construct is supported by analysis.
 
 ## configuration
 
+All settings are optional; the language server can run without any configuration.
 Set `redscript.scriptCachePath` to a compiled script cache file to use it instead
 of locating the cache through `redscript.gameDir`. The debugger still requires
 `redscript.gameDir` to discover running game instances.
