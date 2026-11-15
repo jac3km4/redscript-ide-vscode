@@ -9,7 +9,8 @@
     "vscode": "^1.91.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Debuggers"
   ],
   "activationEvents": [
     "onLanguage:redscript",
@@ -115,7 +116,7 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "typecheck": "tsc --noEmit -p ./tsconfig.json",
-    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --format=cjs --target=node20 --external:vscode",
+    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --format=cjs --target=node20 --external:vscode --minify",
     "compile": "npm run typecheck && npm run build",
     "test": "node --test test/*.test.cjs",
     "watch": "npm run build -- --watch",
